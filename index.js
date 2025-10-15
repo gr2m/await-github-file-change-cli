@@ -3,12 +3,12 @@
 import { Octokit } from "octokit";
 
 /**
- * Parse GitHub URL to extract owner, repo, and path
+ * Parse GitHub URL to extract owner, repo, ref, and path
  * @param {string} url - GitHub URL like https://github.com/owner/repo/blob/branch/path/to/file
- * @returns {{owner: string, repo: string, path: string}} Parsed components
+ * @returns {{owner: string, repo: string, ref: string, path: string}} Parsed components
  */
 function parseGitHubUrl(url) {
-  const regex = /github\.com\/([^/]+)\/([^/]+)\/blob\/[^/]+\/(.+)/;
+  const regex = /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/;
   const match = url.match(regex);
   
   if (!match) {
@@ -18,7 +18,8 @@ function parseGitHubUrl(url) {
   return {
     owner: match[1],
     repo: match[2],
-    path: match[3]
+    ref: match[3],
+    path: match[4]
   };
 }
 
@@ -28,13 +29,15 @@ function parseGitHubUrl(url) {
  * @param {string} owner - Repository owner
  * @param {string} repo - Repository name
  * @param {string} path - File path
+ * @param {string} ref - Branch name or commit SHA
  * @returns {Promise<string>} The etag value
  */
-async function getEtag(octokit, owner, repo, path) {
+async function getEtag(octokit, owner, repo, path, ref) {
   const response = await octokit.request('HEAD /repos/{owner}/{repo}/contents/{path}', {
     owner,
     repo,
     path,
+    ref,
     request: {
       method: 'HEAD'
     }
@@ -49,13 +52,14 @@ async function getEtag(octokit, owner, repo, path) {
  * @param {string} owner - Repository owner
  * @param {string} repo - Repository name
  * @param {string} path - File path
+ * @param {string} ref - Branch name or commit SHA
  * @param {string} initialEtag - Initial etag to compare against
  */
-async function waitForEtagChange(octokit, owner, repo, path, initialEtag) {
+async function waitForEtagChange(octokit, owner, repo, path, ref, initialEtag) {
   return new Promise((resolve, reject) => {
     const interval = setInterval(async () => {
       try {
-        const currentEtag = await getEtag(octokit, owner, repo, path);
+        const currentEtag = await getEtag(octokit, owner, repo, path, ref);
         
         if (currentEtag !== initialEtag) {
           clearInterval(interval);
@@ -83,18 +87,18 @@ async function main() {
   }
   
   try {
-    const { owner, repo, path } = parseGitHubUrl(url);
+    const { owner, repo, ref, path } = parseGitHubUrl(url);
     
     const octokit = new Octokit({
       auth: process.env.GITHUB_TOKEN
     });
     
-    console.log(`Monitoring ${owner}/${repo}/${path} for changes...`);
+    console.log(`Monitoring ${owner}/${repo}/${path} (ref: ${ref}) for changes...`);
     
-    const initialEtag = await getEtag(octokit, owner, repo, path);
+    const initialEtag = await getEtag(octokit, owner, repo, path, ref);
     console.log(`Initial etag: ${initialEtag}`);
     
-    const newEtag = await waitForEtagChange(octokit, owner, repo, path, initialEtag);
+    const newEtag = await waitForEtagChange(octokit, owner, repo, path, ref, initialEtag);
     console.log(`File changed! New etag: ${newEtag}`);
     
     process.exit(0);

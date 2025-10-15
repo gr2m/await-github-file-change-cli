@@ -9,6 +9,7 @@ describe('parseGitHubUrl', () => {
     
     assert.strictEqual(result.owner, 'gr2m');
     assert.strictEqual(result.repo, 'sandbox');
+    assert.strictEqual(result.ref, 'main');
     assert.strictEqual(result.path, 'test-file');
   });
 
@@ -18,6 +19,7 @@ describe('parseGitHubUrl', () => {
     
     assert.strictEqual(result.owner, 'owner');
     assert.strictEqual(result.repo, 'repo');
+    assert.strictEqual(result.ref, 'main');
     assert.strictEqual(result.path, 'path/to/file.txt');
   });
 
@@ -27,6 +29,17 @@ describe('parseGitHubUrl', () => {
     
     assert.strictEqual(result.owner, 'owner');
     assert.strictEqual(result.repo, 'repo');
+    assert.strictEqual(result.ref, 'develop');
+    assert.strictEqual(result.path, 'file.js');
+  });
+
+  it('should parse a GitHub URL with commit SHA', () => {
+    const url = 'https://github.com/owner/repo/blob/abc123def456/file.js';
+    const result = parseGitHubUrl(url);
+    
+    assert.strictEqual(result.owner, 'owner');
+    assert.strictEqual(result.repo, 'repo');
+    assert.strictEqual(result.ref, 'abc123def456');
     assert.strictEqual(result.path, 'file.js');
   });
 
@@ -61,7 +74,7 @@ describe('getEtag', () => {
       }))
     };
 
-    const etag = await getEtag(mockOctokit, 'owner', 'repo', 'path/to/file');
+    const etag = await getEtag(mockOctokit, 'owner', 'repo', 'path/to/file', 'main');
     
     assert.strictEqual(etag, 'W/"abc123"');
     assert.strictEqual(mockOctokit.request.mock.callCount(), 1);
@@ -72,6 +85,7 @@ describe('getEtag', () => {
       owner: 'owner',
       repo: 'repo',
       path: 'path/to/file',
+      ref: 'main',
       request: {
         method: 'HEAD'
       }
@@ -87,9 +101,25 @@ describe('getEtag', () => {
       }))
     };
 
-    const etag = await getEtag(mockOctokit, 'owner', 'repo', 'file.txt');
+    const etag = await getEtag(mockOctokit, 'owner', 'repo', 'file.txt', 'develop');
     
     assert.strictEqual(etag, '"xyz789"');
+  });
+
+  it('should pass commit SHA as ref', async () => {
+    const mockOctokit = {
+      request: mock.fn(async () => ({
+        headers: {
+          etag: 'W/"commit-etag"'
+        }
+      }))
+    };
+
+    const etag = await getEtag(mockOctokit, 'owner', 'repo', 'file.txt', 'abc123def456');
+    
+    assert.strictEqual(etag, 'W/"commit-etag"');
+    const callArgs = mockOctokit.request.mock.calls[0].arguments;
+    assert.strictEqual(callArgs[1].ref, 'abc123def456');
   });
 });
 
@@ -107,7 +137,7 @@ describe('waitForEtagChange', () => {
       })
     };
 
-    const promise = waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'W/"old-etag"');
+    const promise = waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'main', 'W/"old-etag"');
     
     const newEtag = await promise;
     
@@ -124,7 +154,7 @@ describe('waitForEtagChange', () => {
 
     await assert.rejects(
       async () => {
-        await waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'W/"etag"');
+        await waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'main', 'W/"etag"');
       },
       {
         message: 'API Error'
@@ -141,10 +171,25 @@ describe('waitForEtagChange', () => {
       }))
     };
 
-    const newEtag = await waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'W/"old-etag"');
+    const newEtag = await waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'develop', 'W/"old-etag"');
     
     assert.strictEqual(newEtag, 'W/"different-etag"');
     assert.strictEqual(mockOctokit.request.mock.callCount(), 1);
+  });
+
+  it('should pass ref to getEtag calls', async (t) => {
+    const mockOctokit = {
+      request: mock.fn(async () => ({
+        headers: {
+          etag: 'W/"different-etag"'
+        }
+      }))
+    };
+
+    await waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'abc123def456', 'W/"old-etag"');
+    
+    const callArgs = mockOctokit.request.mock.calls[0].arguments;
+    assert.strictEqual(callArgs[1].ref, 'abc123def456');
   });
 });
 
