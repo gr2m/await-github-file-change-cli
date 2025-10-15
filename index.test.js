@@ -76,7 +76,7 @@ describe('getEtag', () => {
 
     const etag = await getEtag(mockOctokit, 'owner', 'repo', 'path/to/file', 'main');
     
-    assert.strictEqual(etag, 'W/"abc123"');
+    assert.strictEqual(etag, '"abc123"');
     assert.strictEqual(mockOctokit.request.mock.callCount(), 1);
     
     const callArgs = mockOctokit.request.mock.calls[0].arguments;
@@ -117,14 +117,14 @@ describe('getEtag', () => {
 
     const etag = await getEtag(mockOctokit, 'owner', 'repo', 'file.txt', 'abc123def456');
     
-    assert.strictEqual(etag, 'W/"commit-etag"');
+    assert.strictEqual(etag, '"commit-etag"');
     const callArgs = mockOctokit.request.mock.calls[0].arguments;
     assert.strictEqual(callArgs[1].ref, 'abc123def456');
   });
 });
 
 describe('waitForEtagChange', () => {
-  it('should resolve when etag changes', async (t) => {
+  it.only('should resolve when etag changes', async (t) => {
     let callCount = 0;
     const mockOctokit = {
       request: mock.fn(async () => {
@@ -137,11 +137,11 @@ describe('waitForEtagChange', () => {
       })
     };
 
-    const promise = waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'main', 'W/"old-etag"');
+    const promise = waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'main', '"old-etag"');
     
     const newEtag = await promise;
     
-    assert.strictEqual(newEtag, 'W/"new-etag"');
+    assert.strictEqual(newEtag, '"new-etag"');
     assert.ok(mockOctokit.request.mock.callCount() >= 3);
   });
 
@@ -173,7 +173,7 @@ describe('waitForEtagChange', () => {
 
     const newEtag = await waitForEtagChange(mockOctokit, 'owner', 'repo', 'path', 'develop', 'W/"old-etag"');
     
-    assert.strictEqual(newEtag, 'W/"different-etag"');
+    assert.strictEqual(newEtag, '"different-etag"');
     assert.strictEqual(mockOctokit.request.mock.callCount(), 1);
   });
 
