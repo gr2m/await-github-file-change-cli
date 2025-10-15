@@ -43,7 +43,8 @@ async function getEtag(octokit, owner, repo, path, ref) {
     }
   });
   
-  return response.headers.etag;
+  // normalize, e.g. "W/"abc123"" -> "abc123"
+ return response.headers.etag.replace(/^W\//, '');
 }
 
 /**
