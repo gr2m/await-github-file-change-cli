@@ -61,5 +61,5 @@ npm test
 
 ## License
 
-ISC
+[ISC](LICENSE)
 
