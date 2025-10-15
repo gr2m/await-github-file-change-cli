@@ -1,6 +1,6 @@
 {
   "name": "await-github-file-change-cli",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "CLI tool to monitor GitHub file changes by polling for etag changes",
   "main": "index.js",
   "type": "module",
@@ -23,6 +23,16 @@
   "dependencies": {
     "octokit": "^4.0.0"
   },
-  "repository": "github:gr2m/await-github-file-change-cli"
+  "repository": "github:gr2m/await-github-file-change-cli",
+  "release": {
+    "branches": [
+      "+([0-9]).x",
+      "main",
+      {
+        "name": "beta",
+        "prerelease": true
+      }
+    ]
+  }
 }
 
