@@ -1,0 +1,27 @@
+{
+  "name": "await-github-file-change-cli",
+  "version": "1.0.0",
+  "description": "CLI tool to monitor GitHub file changes by polling for etag changes",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "await-github-file-change": "./index.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "github",
+    "cli",
+    "file",
+    "monitor",
+    "etag",
+    "octokit"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "octokit": "^4.0.0"
+  }
+}
+
