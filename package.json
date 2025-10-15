@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "bin": {
-    "await-github-file-change": "./index.js"
+    "await-github-file-change": "./bin/cli.js"
   },
   "scripts": {
     "test": "node --test"

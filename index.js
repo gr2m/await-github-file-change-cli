@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { Octokit } from "octokit";
 
 /**
@@ -109,10 +107,5 @@ async function main() {
   }
 }
 
-// Only run main if this file is being executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
-
-export { parseGitHubUrl, getEtag, waitForEtagChange };
+export { parseGitHubUrl, getEtag, waitForEtagChange, main };
 
