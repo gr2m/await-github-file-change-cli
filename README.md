@@ -13,7 +13,7 @@ npx await-github-file-change-cli https://github.com/owner/repo/blob/branch/path/
 ### Example
 
 ```bash
-npx await-github-file-change-cli https://github.com/gr2m/sandbox/blob/main/test-file
+npx await-github-file-change-cli https://github.com/gr2m/sandbox/blob/main/test-file | say 'file was changed'
 ```
 
 ## Authentication
